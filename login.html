@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title> Admin Portal</title>
+		<style>
+		.login-form {
+			align-content: center;
+			width: 300px;
+			margin: 0 auto;
+			font-family: Tahoma, Geneva, sans-serif;
+		}
+		.login-form h1 {
+			text-align: center;
+			color: #4d4d4d;
+			font-size: 24px;
+			padding: 20px 0 20px 0;
+			display: inline-block;
+		}
+		.login-form input[type="password"],
+		.login-form input[type="text"] {
+			width: 100%;
+			padding: 15px;
+			border: 1px solid #dddddd;
+			margin-bottom: 15px;
+			box-sizing:border-box;
+		}
+		.login-form input[type="submit"],
+		.login-form input[type='button'] {
+			width: 30%;
+			padding: 15px;
+			background-color: #535b63;
+			border: 0;
+			box-sizing: border-box;
+			cursor: pointer;
+			font-weight: bold;
+			color: #ffffff;
+		}
+		
+		</style>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+		<script src="validations.js"></script>
+		
+		<script>
+		function loginCheck (){
+			let isValidForm = checkLoginValidations();
+			if(!isValidForm){
+				return false;
+			}
+				
+			let formData = {"email":document.getElementById("email").value,"password":document.getElementById("password").value};
+			$.ajax({
+            	url: 'login',
+            	type: 'post',
+				dataType: 'json',
+            	contentType: 'application/json',
+            	success: function (data) {
+					if(data.responseCode == 'SUCC'){
+						localStorage.setItem("authToken", data.authToken);
+				   		$('#mainDiv').html('<table id="myTable" style="width: 500px; margin: 0 auto; text-align:left;" border="1"></table>');
+				   		getAllUsers();
+			    	} else {
+						$('#errortag').html("Invalid Username / Password.");
+					}
+				},
+            	data: JSON.stringify(formData)
+        	});
+		}
+
+
+		function getAllUsers(){
+            $.ajax({
+            	url: "getUsers",
+            	type: 'GET',
+				dataType: 'json',
+				headers: {
+        		'authorization': localStorage.getItem("authToken")
+				},
+            	success: function(res) {
+                	buildHtmlTable("#myTable",res);
+        		}
+    		});
+		}
+
+		function buildHtmlTable(selector,data) {
+  			var columns = addAllColumnHeaders(data, selector);
+			for (var i = 0; i < data.length; i++) {
+				var row$ = $('<tr/>');
+				for (var colIndex = 0; colIndex < columns.length; colIndex++) {
+					var cellValue = data[i][columns[colIndex]];
+					if (cellValue == null) cellValue = "";
+					row$.append($('<td/>').html(cellValue));
+				}
+				row$.append($('<td/>').html("<img  onclick='updateRecord(&#39;"+data[i].email+"&#39;)' src='images/edit.png' margin-left='200px' width='20' height='20'/> <img  onclick='deleteRecord(&#39;"+data[i].email+"&#39;)' src='images/delete.png' width='20' height='20'/>"));
+                $(selector).append(row$);
+            } 	
+    	}
+		
+
+		function addAllColumnHeaders(data, selector) {
+  			var columnSet = [];
+  			var headerTr$ = $('<tr/>');
+			for (var i = 0; i < data.length; i++) {
+				var rowHash = data[i];
+    			for (var key in rowHash) {
+      				if ($.inArray(key, columnSet) == -1) {
+        				columnSet.push(key);
+        				headerTr$.append($('<th/>').html(key));
+     				}
+    			}
+  			}
+  			headerTr$.append($('<th/>').html("Actions"));
+  			$(selector).append(headerTr$);
+			return columnSet;
+		}
+
+
+		function deleteRecord(emailAddress){
+			let formData = {"email":emailAddress};
+			$.ajax({
+            	url: 'delete',
+            	type: 'post',
+				dataType: 'json',
+				contentType: 'application/json',
+				headers: {
+        		'authorization': localStorage.getItem("authToken")
+				},
+            	success: function (data) {
+					if(data.responseCode == 'SUCC'){
+				   		alert('Are sure to delete?')
+				   		alert('Deleted Sucessfully!')
+						$('#mainDiv').html('<table id="myTable" style="width: 500px; margin: 0 auto; text-align:left;" border="1"></table>');
+						getAllUsers();
+					}
+            	},
+            	data: JSON.stringify(formData)
+        	});
+		}
+
+		function updateRecord(emailAddress){
+			$('#mainDiv').html('First Name:<input type="text" name="first_name" id="first_name"> <br/> Last Name:<input type="text" name="last_name" id="last_name"> <br/><input type="hidden" name="email" value=""><br/> <input type="submit" value="Update" onClick="updateValues(&#39;'+emailAddress+'&#39;)">');
+		}
+
+
+		function updateValues(emailAddress){
+			let formData = {"email":emailAddress,"first_name":$('#first_name').val(),"last_name":$('#last_name').val()};
+			$.ajax({
+            	url: 'update',
+            	type: 'post',
+				dataType: 'json',
+				contentType: 'application/json',
+				headers: {
+        		'authorization': localStorage.getItem("authToken")
+				},
+            	success: function (data) {
+			   		if(data.responseCode == 'SUCC'){
+				   		alert ('Updated Sucessfully!')
+						$('#mainDiv').html('<table id="myTable" style="width: 500px; margin: 0 auto; text-align:left;" border="1"></table>');
+						getAllUsers();
+					}
+			   		return "User Data is Not Updated!"
+            	},
+            	data: JSON.stringify(formData)
+        	});
+		}
+		</script>
+	</head>
+	<body>
+		<div class="login-form">
+			<h1>Welcome to D3V Admin Portal</h1>
+			<div id="mainDiv">  
+			<form action="login" method="POST">
+				<input type="text"  id="email" name="email" placeholder="Username" required>
+				<div id="logInEmailErrtag"> </div>
+				<input type="password" id="password" name="password" placeholder="Password" required>
+				<div id="logInPassErrtag"> </div>
+				<input type="button" value="Login" onclick="loginCheck()">
+				<div id="errortag"> </div>
+				<p>
+					Not a member yet ?  <input type="button" onclick="window.location.href='/signup.html';" value="SignUp"/> </a>				
+				</p>
+			</form>
+		</div>
+		</div>
+		
+	</body>
+</html>
