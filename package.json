@@ -9,8 +9,7 @@
   "keywords": [
     "node.js"
   ],
-  "author": "Saurabh Mhatre",
-  "license": "ISC",
+  "author": "mounika",
   "dependencies": {
     "bcrypt": "4.0.1",
     "body-parser": "1.19.0",
