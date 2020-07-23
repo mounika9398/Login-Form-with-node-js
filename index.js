@@ -14,21 +14,6 @@ const { json } = require('body-parser');
 const jwt = require('jsonwebtoken');
 const accessTokenSecret = 'mysectokemhere';
 
-const authenticateJWT = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-   if (authHeader) {
-      const token =  authHeader.indexOf(' ') !== -1 ? authHeader.split(' ')[1] : authHeader;
-      jwt.verify(token, accessTokenSecret, (err, user) => {
-          if (err) {
-              return res.sendStatus(403);
-          }
-          req.user = user;
-          next();
-      });
-  } else {
-      res.sendStatus(401);
-  }
-};
 
 // body parser added
 var app = express();
@@ -62,6 +47,10 @@ router.post('/register', registration.registration);
 router.get('/signup.html', function(req, res) {
   res.sendFile(path.join(__dirname+"/"+'signup.html'));
 });
+// route to handle validations
+router.get('/validations.js', function(req, res) {
+    res.sendFile(path.join(__dirname+"/routes/"+'validations.js'));
+  });
 
 
 //route to handle userList
