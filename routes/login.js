@@ -19,10 +19,7 @@ exports.login = async function(req,res){
       if(results.length >0){
         const comparision = await bcrypt.compare(password, results[0].password)
         if(comparision){
-          const accessToken = jwt.sign({ username: email }, accessTokenSecret);
-          console.log("*****************");
-          console.log(accessToken);
-          console.log("*****************");
+          const accessToken = jwt.sign({ username: email }, accessTokenSecret)
             res.send({
               "code":200,
               "success":'',
